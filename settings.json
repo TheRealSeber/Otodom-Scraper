@@ -1,0 +1,15 @@
+{
+    "price": {
+        "min": 0,
+        "max": 10000000
+    },
+    "district": "wola",
+	"province" : "warszawa",
+	"city": "warszawa",
+	"property_type": "flat",
+	"auction_type": "sale",
+	"_comments": {
+        "property_type": "Can be: 'flat', 'studio', 'house', 'investment', 'room', 'plot', 'venue', 'magazine', 'garage'",
+        "sale_or_rent": "Can be: 'sale', 'rent'"
+    }
+}
