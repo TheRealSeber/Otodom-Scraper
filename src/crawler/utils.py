@@ -1,20 +1,17 @@
-from listing import Listing
+def flatten_json(y: dict):
+    out = {}
 
+    def flatten(x, name=""):
+        if type(x) is dict:
+            for a in x:
+                flatten(x[a], name + a + "_")
+        elif type(x) is list:
+            i = 0
+            for a in x:
+                flatten(a, name + str(i) + "_")
+                i += 1
+        else:
+            out[name[:-1]] = x
 
-def remove_duplicated_listings(listings: list) -> set:
-    """
-    Remove duplicated listings.
-
-    :param listings: The listings
-    :return: The listings without duplicates
-    """
-    flattened_set = {value for sublist in listings for value in sublist}
-    links = set()
-    filtered_set = set()
-    for listing in flattened_set:
-        link = Listing.extract_link(listing)
-        if link not in links:
-            filtered_set.add(listing)
-        links.add(link)
-
-    return filtered_set
+    flatten(y)
+    return out

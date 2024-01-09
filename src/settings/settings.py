@@ -1,9 +1,9 @@
 import json
 import logging
 
-from settings.s_types import AuctionType
-from settings.s_types import Defaults
-from settings.s_types import PropertyType
+from common import Defaults
+from settings.settings_types import AuctionType
+from settings.settings_types import PropertyType
 from settings.utils import get_auction_type
 from settings.utils import get_property_type
 from settings.utils import replace_polish_characters
@@ -68,13 +68,15 @@ class Settings:
         try:
             with open("settings.json", "r", encoding="utf-8") as f:
                 settings = json.load(f)
+                crawler_settings = settings["crawler"]
                 self.base_url = Defaults.DEFAULT_URL
-                self.price_min, self.price_max = self.__init_price(settings)
-                self.province = self.__init_province(settings)
-                self.city = self.__init_city(settings)
-                self.district = self.__init_district(settings)
-                self.property_type = self.__init_property_type(settings)
-                self.auction_type = self.__init_auction_type(settings)
+                self.price_min, self.price_max = self.__init_price(crawler_settings)
+                self.province = self.__init_province(crawler_settings)
+                self.city = self.__init_city(crawler_settings)
+                self.district = self.__init_district(crawler_settings)
+                self.property_type = self.__init_property_type(crawler_settings)
+                self.auction_type = self.__init_auction_type(crawler_settings)
+                self.mongo_db_host = self.__init_mongo_db_host(settings["database"])
 
         except Exception as e:
             logging.warning(
@@ -229,6 +231,24 @@ class Settings:
             )
             return Defaults.DEFAULT_AUCTION_TYPE
         return auction_type
+
+    def __init_mongo_db_host(self, settings: dict) -> str:
+        """
+        Initialize the mongo db host from the settings dictionary.
+
+        If the mongo db host is not a string,
+        a warning message is logged and the default mongo db host is returned.
+
+        :param settings: A dictionary containing the settings
+        :return: The mongo db host
+        """
+        mongo_db_host = settings.get("host")
+        if not isinstance(mongo_db_host, str):
+            logging.warning(
+                "Mongo db host is not correct. Mongo db host is set to default"
+            )
+            return Defaults.DEFAULT_MONGO_DB_HOST
+        return mongo_db_host
 
     def set_default(self):
         """

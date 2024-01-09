@@ -5,9 +5,15 @@ import logging
 
 import requests
 from bs4 import BeautifulSoup
-from crawler.utils import remove_duplicated_listings
+from common import Defaults
+from common import OfferedBy
+from crawler.utils import flatten_json
+from database import AgencyService
+from database import PropertyService
+from listing import Agency
 from listing import DataExtractionError
-from listing import Listing
+from listing import Property
+from mongoengine import connect as mongo_connect
 from settings import Settings
 
 HEADERS = {
@@ -29,6 +35,7 @@ class Crawler:
         self.settings = Settings()
         self.params = self.generate_params()
         self.listings = list()
+        mongo_connect(host=self.settings.mongo_db_host)  # noqa: E501
 
     def generate_search_url(self) -> str:
         """
@@ -95,7 +102,7 @@ class Crawler:
         listings = soup.select("li[data-cy=listing-item]")
         return listings
 
-    def extract_listing_data(self, listing: Listing) -> Listing:
+    def extract_listing_data(self, listing: Property) -> (Property, Agency | None):
         """
         Extract the data from the given listing.
 
@@ -106,12 +113,18 @@ class Crawler:
         max_retries = 3
         while max_retries > 0:
             response = requests.get(url=listing.link, headers=HEADERS)
-            print(f"Extracting data from {listing.link}...")
+            print(f"Extracting data from {listing.link}")
             soup = BeautifulSoup(response.content, "html.parser")
             if not listing.informational_json_exists(soup):
                 max_retries -= 1
                 continue
             listing.extract_data_from_page(soup)
+            if listing.offered_by == OfferedBy.ESTATE_AGENCY:
+                agency = Agency(soup)
+                agency_doc = AgencyService.get_by_otodom_id(agency.otodom_id)
+                if agency_doc is None or agency_doc.otodom_id != agency.otodom_id:
+                    AgencyService.put(agency)
+            PropertyService.put(listing)
             return listing
         raise DataExtractionError(url=listing.link)
 
@@ -131,7 +144,7 @@ class Crawler:
         """
         with open(filename, "w", encoding="utf-8") as file:
             json.dump(
-                [obj.__dict__ for obj in self.listings],
+                [obj.to_dict() for obj in self.listings],
                 file,
                 ensure_ascii=False,
                 indent=4,
@@ -143,9 +156,9 @@ class Crawler:
 
         :param filename: The name of the file
         """
-        data = [obj.__dict__ for obj in self.listings]
+        data = [flatten_json(obj.to_dict()) for obj in self.listings]
 
-        keys = data[0].keys()
+        keys = {key for dict_ in data for key in dict_.keys()}
 
         with open(filename, "w", newline="", encoding="utf-8") as output_file:
             dict_writer = csv.DictWriter(output_file, keys)
@@ -164,8 +177,14 @@ class Crawler:
                 executor.map(self.extract_listings_from_page, range(1, pages + 1))
             )
 
-        listings = remove_duplicated_listings(listings)
-        listings = {Listing(listing) for listing in listings}
+        existing_links = PropertyService.get_all_links()
+        listings = {
+            Property(listing)
+            for sublist in listings
+            for listing in sublist
+            if Defaults.DEFAULT_URL + Property.extract_link(listing)
+            not in existing_links
+        }
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             listings = list(executor.map(self.extract_listing_data, listings))
 

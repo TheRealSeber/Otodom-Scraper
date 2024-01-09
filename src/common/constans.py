@@ -1,21 +1,37 @@
 from enum import Enum
 
 
-class PropertyType(Enum):
-    FLAT = "mieszkanie"
-    STUDIO = "kawalerka"
-    HOUSE = "dom"
-    INVESTMENT = "inwestycja"
-    ROOM = "pokoj"
-    PLOT = "dzialka"
-    VENUE = "lokal"
-    MAGAZINE = "haleimagazyny"
-    GARAGE = "garaz"
+class OfferedBy(Enum):
+    PRIVATE = "private"
+    ESTATE_AGENCY = "agency"
 
 
 class AuctionType(Enum):
-    SALE = "sprzedaz"
-    RENT = "wynajem"
+    SALE = "sale"
+    RENT = "rent"
+
+
+class PropertyType(Enum):
+    FLAT = "flat"
+    STUDIO = "studio"
+    HOUSE = "house"
+    INVESTMENT = "investment"
+    ROOM = "room"
+    PLOT = "plot"
+    VENUE = "venue"
+    MAGAZINE = "magazine"
+    GARAGE = "garage"
+
+
+class ConstructionStatus(Enum):
+    TO_RENOVATE = "to_renovate"
+    TO_FINISH = "to_completion"
+    READY_TO_USE = "ready_to_use"
+
+
+class MarketType(Enum):
+    PRIMARY = "primary"
+    SECONDARY = "secondary"
 
 
 class Defaults:
@@ -42,3 +58,21 @@ class Defaults:
     DEFAULT_DISTRICT = None
     DEFAULT_PROPERTY_TYPE = PropertyType.FLAT
     DEFAULT_AUCTION_TYPE = AuctionType.SALE
+
+
+AUCTION_TYPE_MAP = {
+    "sprzedaz": AuctionType.SALE,
+    "wynajem": AuctionType.RENT,
+}
+
+PROPERTY_TYPE_MAP = {
+    "mieszkanie": PropertyType.FLAT,
+    "kawalerka": PropertyType.STUDIO,
+    "dom": PropertyType.HOUSE,
+    "inwestycja": PropertyType.INVESTMENT,
+    "pokoj": PropertyType.ROOM,
+    "dzialka": PropertyType.PLOT,
+    "lokal": PropertyType.VENUE,
+    "haleimagazyny": PropertyType.MAGAZINE,
+    "garaz": PropertyType.GARAGE,
+}

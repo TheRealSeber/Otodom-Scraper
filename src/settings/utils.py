@@ -1,12 +1,12 @@
-from settings.s_types import AuctionType
-from settings.s_types import PropertyType
+from settings.settings_types import AuctionType
+from settings.settings_types import PropertyType
 
-AUCTION_TYPE_MAPPING = {
+AUCTION_TYPE_MAP = {
     "sale": AuctionType.SALE,
     "rent": AuctionType.RENT,
 }
 
-PROPERTY_TYPE_MAPPING = {
+PROPERTY_TYPE_MAP = {
     "flat": PropertyType.FLAT,
     "studio": PropertyType.STUDIO,
     "house": PropertyType.HOUSE,
@@ -50,7 +50,7 @@ def get_auction_type(auction_type: str) -> AuctionType | None:
     :param auction_type: A string representing the auction type
     :return: The corresponding AuctionType enum value or None
     """
-    return AUCTION_TYPE_MAPPING.get(auction_type.lower(), None)
+    return AUCTION_TYPE_MAP.get(auction_type.lower(), None)
 
 
 def get_property_type(property_type: str) -> PropertyType | None:
@@ -63,7 +63,7 @@ def get_property_type(property_type: str) -> PropertyType | None:
     :param property_type: A string representing the property type
     :return: The corresponding PropertyType enum value or None
     """
-    return PROPERTY_TYPE_MAPPING.get(property_type.lower(), None)
+    return PROPERTY_TYPE_MAP.get(property_type.lower(), None)
 
 
 def replace_polish_characters(text: str) -> str:
