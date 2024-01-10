@@ -1,0 +1,18 @@
+name: pre-commit
+
+on: push
+
+jobs:
+  run-linters:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Set up pre-commit Cache
+        uses: pre-commit/action@v3.0.0
