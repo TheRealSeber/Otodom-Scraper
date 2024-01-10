@@ -1,4 +1,10 @@
 class Localization:
+    """
+    Represents the localization of a listing.
+
+    :param properties: The properties dictionary containing the localization
+    """
+
     def __init__(self, properties: dict):
         self.province = properties["province"]["code"]
         self.city = properties["city"]["code"]
@@ -14,7 +20,7 @@ class Localization:
         :param properties: The properties containing the district
         :return: The district
         """
-        district = properties.get("district", "")
+        district = properties.get("district")
         if isinstance(district, dict):
             district = district["name"]
         return district
@@ -27,7 +33,7 @@ class Localization:
         :param properties: The properties containing the street
         :return: The street
         """
-        street = properties.get("street", "")
+        street = properties.get("street")
         if isinstance(street, dict):
             street = street["name"]
             number = properties.get("number")
@@ -43,7 +49,7 @@ class Localization:
         :param properties: The properties containing the county
         :return: The county
         """
-        county = properties.get("county", "")
+        county = properties.get("county")
         if isinstance(county, dict):
             county = county["code"]
         return county

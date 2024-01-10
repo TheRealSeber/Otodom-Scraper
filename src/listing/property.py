@@ -4,8 +4,8 @@ from enum import Enum
 from bs4 import ResultSet
 from common import AUCTION_TYPE_MAP
 from common import AuctionType
+from common import Constans
 from common import ConstructionStatus
-from common import Defaults
 from common import MarketType
 from common import OfferedBy
 from common import PROPERTY_TYPE_MAP
@@ -16,12 +16,12 @@ from listing.localization import Localization
 
 class Property:
     """
-    A class that represents a listing on the otodom.pl website.
+    A class that represents a property on the otodom.pl website.
     """
 
     def __init__(self, code: ResultSet):
         """
-        Initializes the Listing instance.
+        Initializes the Prop instance.
 
         Some of the attributes has defined types and during extraction of the data,
         they a guarantee to exist, but for the sake of the initialization
@@ -29,7 +29,7 @@ class Property:
 
         :param code: The HTML code of the listing page
         """
-        self.link: str = Defaults.DEFAULT_URL + self.extract_link(code)
+        self.link: str = Constans.DEFAULT_URL + self.extract_link(code)
         self.promoted: bool = self.extract_promoted(code)
         self.otodom_id: int = None
         self.title: str = None
@@ -64,10 +64,10 @@ class Property:
     @staticmethod
     def extract_promoted(code: ResultSet) -> bool:
         """
-        Determines whether the listing is promoted.
+        Determines whether the property is promoted on the page.
 
         :param code: The HTML code containing the promotion status
-        :return: True if the listing is promoted, False otherwise
+        :return: True if the property is promoted on the page, False otherwise
         """
         return code.select_one("article>span+div") is not None
 
@@ -116,23 +116,23 @@ class Property:
     @staticmethod
     def informational_json_exists(code: ResultSet) -> bool:
         """
-        Checks if the JSON with informations about the listings
+        Checks if the JSON with informations about the property
         in the returned data from the request is available.
 
-        :param code: The HTML code of the listing page
-        :return: True if the JSON with the listing informations exists int the code,
+        :param code: The HTML code of the property page
+        :return: True if the JSON with the property informations exists int the code,
             False otherwise
         """
         return code.find("script", {"type": "application/json"}) is not None
 
     def extract_data_from_page(self, code: ResultSet) -> None:
         """
-        Extracts data from the page and updates the Listing instance.
+        Extracts data from the page and updates the property instance.
 
-        This method loads the listing information from a script tag in the HTML code,
-        parses it as JSON, and uses it to update the attributes of the Listing instance.
+        This method loads the property information from a script tag in the HTML code,
+        parses it as JSON and uses it to update the attributes of the property instance.
 
-        :param code: The HTML code containing the listing information
+        :param code: The HTML code containing the property information
         """
         listing_information = json.loads(
             code.find("script", {"type": "application/json"}).text
@@ -161,11 +161,11 @@ class Property:
 
     def to_dict(self):
         """
-        Converts the Listing instance to a dictionary.
+        Converts the Property instance to a dictionary.
 
         Removes all None values from the dictionary.
 
-        :return: The Listing instance as a dictionary
+        :return: The Property representation as a dictionary
         """
         self_to_dict = {
             key: value for key, value in self.__dict__.items() if value is not None

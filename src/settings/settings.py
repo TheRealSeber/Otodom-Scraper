@@ -1,12 +1,29 @@
 import json
 import logging
+from enum import Enum
 
-from common import Defaults
-from settings.settings_types import AuctionType
-from settings.settings_types import PropertyType
+from common import Constans
 from settings.utils import get_auction_type
 from settings.utils import get_property_type
 from settings.utils import replace_polish_characters
+
+
+class PropertyType(Enum):
+    FLAT = "mieszkanie"
+    STUDIO = "kawalerka"
+    HOUSE = "dom"
+    INVESTMENT = "inwestycja"
+    ROOM = "pokoj"
+    PLOT = "dzialka"
+    VENUE = "lokal"
+    MAGAZINE = "haleimagazyny"
+    GARAGE = "garaz"
+
+
+class AuctionType(Enum):
+    SALE = "sprzedaz"
+    RENT = "wynajem"
+
 
 AVAILABLE_PROVINCES = [
     "dolnoslaskie",
@@ -69,7 +86,7 @@ class Settings:
             with open("settings.json", "r", encoding="utf-8") as f:
                 settings = json.load(f)
                 crawler_settings = settings["crawler"]
-                self.base_url = Defaults.DEFAULT_URL
+                self.base_url = Constans.DEFAULT_URL
                 self.price_min, self.price_max = self.__init_price(crawler_settings)
                 self.province = self.__init_province(crawler_settings)
                 self.city = self.__init_city(crawler_settings)
@@ -101,25 +118,25 @@ class Settings:
         logging.info(price)
         if not isinstance(price, dict):
             logging.warning("Prices is not of dict type. Price is set to default")
-            return Defaults.DEFAULT_PRICE_MIN, Defaults.DEFAULT_PRICE_MAX
+            return Constans.DEFAULT_PRICE_MIN, Constans.DEFAULT_PRICE_MAX
 
         price_min = price.get("min")
         price_max = price.get("max")
 
         if not isinstance(price_min, int):
             logging.warning("Min price is not of int type. Min price is set to default")
-            price_min = Defaults.DEFAULT_PRICE_MIN
+            price_min = Constans.DEFAULT_PRICE_MIN
         if not isinstance(price_max, int):
             logging.warning("Max price is not of int type. Max price is set to default")
-            price_max = Defaults.DEFAULT_PRICE_MAX
+            price_max = Constans.DEFAULT_PRICE_MAX
         if price_min < 0 or price_max < 0:
             logging.warning("Prices cannot be negative. Prices are set to default")
-            return Defaults.DEFAULT_PRICE_MIN, Defaults.DEFAULT_PRICE_MAX
+            return Constans.DEFAULT_PRICE_MIN, Constans.DEFAULT_PRICE_MAX
         if price_min > price_max:
             logging.warning(
                 "Min price cannot be greater than max price. Prices are set to default"
             )
-            return Defaults.DEFAULT_PRICE_MIN, Defaults.DEFAULT_PRICE_MAX
+            return Constans.DEFAULT_PRICE_MIN, Constans.DEFAULT_PRICE_MAX
 
         return price_min, price_max
 
@@ -137,11 +154,11 @@ class Settings:
         province = settings.get("province")
         if not isinstance(province, str):
             logging.warning("Province is not correct. Province is set to default")
-            return Defaults.DEFAULT_PROVINCE
+            return Constans.DEFAULT_PROVINCE
         province = replace_polish_characters(province)
         if province not in AVAILABLE_PROVINCES:
             logging.warning("Province is not correct. Province is set to default")
-            return Defaults.DEFAULT_PROVINCE
+            return Constans.DEFAULT_PROVINCE
         province = province.replace("-", "--")
         return province
 
@@ -159,7 +176,7 @@ class Settings:
         city = settings.get("city")
         if not isinstance(city, str):
             logging.warning("City is not correct. City is set to default")
-            return Defaults.DEFAULT_CITY
+            return Constans.DEFAULT_CITY
         return replace_polish_characters(city)
 
     @staticmethod
@@ -176,7 +193,7 @@ class Settings:
         district = settings.get("district")
         if not isinstance(district, str) or district == "":
             logging.warning("District is not correct. District is set to default")
-            return Defaults.DEFAULT_DISTRICT
+            return Constans.DEFAULT_DISTRICT
         return replace_polish_characters(district)
 
     @staticmethod
@@ -195,14 +212,14 @@ class Settings:
             logging.warning(
                 "Property type is not a string. Property type is set to default"
             )
-            return Defaults.DEFAULT_PROPERTY_TYPE
+            return Constans.DEFAULT_PROPERTY_TYPE
 
         property_type = get_property_type(property_type_str)
         if property_type is None:
             logging.warning(
                 "Property type is not correct. Property type is set to default"
             )
-            return Defaults.DEFAULT_PROPERTY_TYPE
+            return Constans.DEFAULT_PROPERTY_TYPE
 
         return property_type
 
@@ -222,14 +239,14 @@ class Settings:
             logging.warning(
                 "Auction type is not correct. Auction type is set to default"
             )
-            return Defaults.DEFAULT_AUCTION_TYPE
+            return Constans.DEFAULT_AUCTION_TYPE
 
         auction_type = get_auction_type(auction_type_str)
         if auction_type is None:
             logging.warning(
                 "Auction type is not correct. Auction type is set to default"
             )
-            return Defaults.DEFAULT_AUCTION_TYPE
+            return Constans.DEFAULT_AUCTION_TYPE
         return auction_type
 
     def __init_mongo_db_host(self, settings: dict) -> str:
@@ -247,7 +264,7 @@ class Settings:
             logging.warning(
                 "Mongo db host is not correct. Mongo db host is set to default"
             )
-            return Defaults.DEFAULT_MONGO_DB_HOST
+            return Constans.DEFAULT_MONGO_DB_HOST
         return mongo_db_host
 
     def set_default(self):
@@ -256,11 +273,11 @@ class Settings:
 
         These default values are defined in the Defaults class.
         """
-        self.base_url = Defaults.DEFAULT_URL
-        self.price_min = Defaults.DEFAULT_PRICE_MIN
-        self.price_max = Defaults.DEFAULT_PRICE_MAX
-        self.province = Defaults.DEFAULT_PROVINCE
-        self.city = Defaults.DEFAULT_CITY
-        self.district = Defaults.DEFAULT_DISTRICT
-        self.property_type = Defaults.DEFAULT_PROPERTY_TYPE
-        self.auction_type = Defaults.DEFAULT_AUCTION_TYPE
+        self.base_url = Constans.DEFAULT_URL
+        self.price_min = Constans.DEFAULT_PRICE_MIN
+        self.price_max = Constans.DEFAULT_PRICE_MAX
+        self.province = Constans.DEFAULT_PROVINCE
+        self.city = Constans.DEFAULT_CITY
+        self.district = Constans.DEFAULT_DISTRICT
+        self.property_type = Constans.DEFAULT_PROPERTY_TYPE
+        self.auction_type = Constans.DEFAULT_AUCTION_TYPE

@@ -5,7 +5,7 @@ import logging
 
 import requests
 from bs4 import BeautifulSoup
-from common import Defaults
+from common import Constans
 from common import OfferedBy
 from crawler.utils import flatten_json
 from database import AgencyService
@@ -106,6 +106,11 @@ class Crawler:
         """
         Extract the data from the given listing.
 
+        At this point, the data is being extracted from the listing page,
+        and as the function is executed, the data is being saved to the database.
+
+        It scrapes both the property and the agency data.
+
         :param listing: The listing
         :raises DataExtractionError: If the data extraction fails
         :return: The data from the listing
@@ -182,7 +187,7 @@ class Crawler:
             Property(listing)
             for sublist in listings
             for listing in sublist
-            if Defaults.DEFAULT_URL + Property.extract_link(listing)
+            if Constans.DEFAULT_URL + Property.extract_link(listing)
             not in existing_links
         }
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:

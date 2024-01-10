@@ -3,8 +3,18 @@ from listing import Agency
 
 
 class AgencyService:
+    """
+    Service responsible for interacting with the agency documents in the database.
+    """
+
     @classmethod
-    def get_by_otodom_id(cls, otodom_id: int) -> AgencyDocument:
+    def get_by_otodom_id(cls, otodom_id: int) -> AgencyDocument | None:
+        """
+        :param otodom_id: The otodom id of the agency
+
+        :return: The agency document with the given otodom id
+            or None if there is no agency with the given otodom id
+        """
         return AgencyDocument.objects(otodom_id=otodom_id).first()
 
     @classmethod

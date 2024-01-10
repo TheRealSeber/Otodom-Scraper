@@ -34,7 +34,7 @@ class MarketType(Enum):
     SECONDARY = "secondary"
 
 
-class Defaults:
+class Constans:
     """
     A class that provides default values for the settings used by the application.
 

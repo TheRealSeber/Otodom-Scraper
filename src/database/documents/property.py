@@ -16,12 +16,21 @@ from mongoengine import URLField
 
 
 class Building(EmbeddedDocument):
+    """
+    Class representing a property building in the MongoDB database.
+    """
+
     type = StringField()
     floors = IntField()
     build_year = IntField()
 
 
 class Location(EmbeddedDocument):
+
+    """
+    Class representing a property location in the MongoDB database.
+    """
+
     province = StringField(required=True)
     city = StringField(required=True)
     district = StringField(required=True)
@@ -30,6 +39,10 @@ class Location(EmbeddedDocument):
 
 
 class PropertyDocument(Document):
+    """
+    Class representing a property document in the MongoDB database.
+    """
+
     link = URLField(required=True)
     promoted = BooleanField(required=True, default=False)
     otodom_id = IntField(required=True, unique=True)

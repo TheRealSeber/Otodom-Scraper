@@ -1,4 +1,10 @@
 def flatten_json(y: dict):
+    """
+    Flattens a JSON object to a single level.
+
+    >>> flatten_json({"a": {"b": 1, "c": {"d": 2}})
+        {"a_b": 1, "a_c_d": 2}
+    """
     out = {}
 
     def flatten(x, name=""):

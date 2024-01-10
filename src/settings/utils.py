@@ -1,5 +1,5 @@
-from settings.settings_types import AuctionType
-from settings.settings_types import PropertyType
+from settings.settings import AuctionType
+from settings.settings import PropertyType
 
 AUCTION_TYPE_MAP = {
     "sale": AuctionType.SALE,

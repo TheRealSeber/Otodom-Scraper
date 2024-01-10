@@ -4,6 +4,10 @@ from mongoengine import StringField
 
 
 class AgencyDocument(Document):
+    """
+    Class representing an agency document in the MongoDB database.
+    """
+
     name = StringField(required=True)
     otodom_id = IntField(required=True, unique=True)
     street = StringField(required=True)

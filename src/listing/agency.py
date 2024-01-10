@@ -5,7 +5,16 @@ from bs4 import ResultSet
 
 
 class Agency:
+    """
+    Represents an estate agency.
+    """
+
     def __init__(self, code: ResultSet):
+        """
+        Initializes the estate agency instance.
+
+        :param code: The HTML code containing the estate agency details
+        """
         listing_information = json.loads(
             code.find("script", {"type": "application/json"}).text
         )
