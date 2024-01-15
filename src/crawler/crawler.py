@@ -35,7 +35,7 @@ class Crawler:
         self.settings = Settings()
         self.params = self.generate_params()
         self.listings = list()
-        mongo_connect(host=self.settings.mongo_db_host)  # noqa: E501
+        mongo_connect(host=self.settings.mongo_db_host)
 
     def generate_search_url(self) -> str:
         """
@@ -79,7 +79,7 @@ class Crawler:
         )
         soup = BeautifulSoup(response.content, "html.parser")
         pages_element = soup.select("button[aria-current][data-cy]")
-        if pages_element is None:
+        if len(pages_element) == 0:
             logging.warning("No listings found with given parameters. Exiting...")
             exit(1)
         pages = pages_element[-1].text
@@ -97,12 +97,12 @@ class Crawler:
         response = requests.get(
             url=self.generate_search_url(), params=params, headers=HEADERS, timeout=10
         )
-        print(f"Extracting listings from page {page}...")
+        logging.info(f"Extracting listings from page {page}")
         soup = BeautifulSoup(response.content, "html.parser")
         listings = soup.select("li[data-cy=listing-item]")
         return listings
 
-    def extract_listing_data(self, listing: Property) -> (Property, Agency | None):
+    def extract_listing_data(self, listing: Property) -> Property:
         """
         Extract the data from the given listing.
 
@@ -118,7 +118,7 @@ class Crawler:
         max_retries = 3
         while max_retries > 0:
             response = requests.get(url=listing.link, headers=HEADERS)
-            print(f"Extracting data from {listing.link}")
+            logging.info(f"Extracting data from {listing.link}")
             soup = BeautifulSoup(response.content, "html.parser")
             if not listing.informational_json_exists(soup):
                 max_retries -= 1
@@ -166,7 +166,7 @@ class Crawler:
         keys = {key for dict_ in data for key in dict_.keys()}
 
         with open(filename, "w", newline="", encoding="utf-8") as output_file:
-            dict_writer = csv.DictWriter(output_file, keys)
+            dict_writer = csv.DictWriter(output_file, sorted(keys))
             dict_writer.writeheader()
             dict_writer.writerows(data)
 
@@ -190,7 +190,7 @@ class Crawler:
             if Constans.DEFAULT_URL + Property.extract_link(listing)
             not in existing_links
         }
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             listings = list(executor.map(self.extract_listing_data, listings))
 
         self.listings = listings

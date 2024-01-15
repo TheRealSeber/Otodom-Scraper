@@ -1,6 +1,9 @@
+import logging
+
 from database import PropertyDocument
 from listing import Property
 from mongoengine import QuerySet
+from mongoengine.errors import NotUniqueError
 
 
 class PropertyService:
@@ -9,7 +12,7 @@ class PropertyService:
     """
 
     @classmethod
-    def get_all_links(cls) -> set:
+    def get_all_links(cls) -> set[str]:
         """
         :return: All the links of the properties in the database
         """
@@ -24,6 +27,12 @@ class PropertyService:
         try:
             property_doc = PropertyDocument(**property_.to_dict())
             property_doc.save()
+        except NotUniqueError:
+            pass
         except Exception as e:
-            print(e)
-            print(property_.to_dict())
+            logging.warning(
+                f"""Failed to insert property {property_.link} to database
+            Error: {e}
+            Property data: {property_.to_dict()}
+            """
+            )

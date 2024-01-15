@@ -1,5 +1,5 @@
-from settings.settings import AuctionType
-from settings.settings import PropertyType
+from settings.s_types import AuctionType
+from settings.s_types import PropertyType
 
 AUCTION_TYPE_MAP = {
     "sale": AuctionType.SALE,
@@ -17,6 +17,25 @@ PROPERTY_TYPE_MAP = {
     "magazine": PropertyType.MAGAZINE,
     "garage": PropertyType.GARAGE,
 }
+
+AVAILABLE_PROVINCES = [
+    "dolnoslaskie",
+    "kujawsko-pomorskie",
+    "lubelskie",
+    "lubuskie",
+    "lodzkie",
+    "malopolskie",
+    "mazowieckie",
+    "opolskie",
+    "podkarpackie",
+    "podlaskie",
+    "pomorskie",
+    "slaskie",
+    "swietokrzyskie",
+    "warminsko-mazurskie",
+    "wielkopolskie",
+    "zachodniopomorskie",
+]
 
 POLISH_CHARACTERS_MAPPING = {
     "ą": "a",
@@ -50,7 +69,7 @@ def get_auction_type(auction_type: str) -> AuctionType | None:
     :param auction_type: A string representing the auction type
     :return: The corresponding AuctionType enum value or None
     """
-    return AUCTION_TYPE_MAP.get(auction_type.lower(), None)
+    return AUCTION_TYPE_MAP.get(auction_type.lower())
 
 
 def get_property_type(property_type: str) -> PropertyType | None:
@@ -63,7 +82,7 @@ def get_property_type(property_type: str) -> PropertyType | None:
     :param property_type: A string representing the property type
     :return: The corresponding PropertyType enum value or None
     """
-    return PROPERTY_TYPE_MAP.get(property_type.lower(), None)
+    return PROPERTY_TYPE_MAP.get(property_type.lower())
 
 
 def replace_polish_characters(text: str) -> str:

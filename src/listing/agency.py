@@ -30,7 +30,9 @@ class Agency:
         ) = self.extract_estate_agency_address(agency_data)
 
     @staticmethod
-    def extract_estate_agency_address(agency_data: dict) -> str:
+    def extract_estate_agency_address(
+        agency_data: dict,
+    ) -> tuple[str, str, str, str, str]:
         """
         Extracts the details of the estate agency from the properties.
 
@@ -39,12 +41,11 @@ class Agency:
         so such possibility is handled by additional regex.
 
         (TODO:) If still it was unsuccessful, to retrieve the data,
-        additional request must be made to the otodom.pl agency website.
+        additional request should be made to the otodom.pl agency website.
 
         :param properties: The properties containing the estate agency details
         :return: The details of the estate agency
         """
-
         address_regex = r"^(.*?), (\d{2}-\d{3}), (.*), (.*), (.*)$"
         address = agency_data["address"]
         address_data = re.findall(address_regex, address)

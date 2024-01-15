@@ -1,48 +1,13 @@
 import json
 import logging
-from enum import Enum
 
 from common import Constans
+from settings.s_types import AuctionType
+from settings.s_types import PropertyType
+from settings.utils import AVAILABLE_PROVINCES
 from settings.utils import get_auction_type
 from settings.utils import get_property_type
 from settings.utils import replace_polish_characters
-
-
-class PropertyType(Enum):
-    FLAT = "mieszkanie"
-    STUDIO = "kawalerka"
-    HOUSE = "dom"
-    INVESTMENT = "inwestycja"
-    ROOM = "pokoj"
-    PLOT = "dzialka"
-    VENUE = "lokal"
-    MAGAZINE = "haleimagazyny"
-    GARAGE = "garaz"
-
-
-class AuctionType(Enum):
-    SALE = "sprzedaz"
-    RENT = "wynajem"
-
-
-AVAILABLE_PROVINCES = [
-    "dolnoslaskie",
-    "kujawsko-pomorskie",
-    "lubelskie",
-    "lubuskie",
-    "lodzkie",
-    "malopolskie",
-    "mazowieckie",
-    "opolskie",
-    "podkarpackie",
-    "podlaskie",
-    "pomorskie",
-    "slaskie",
-    "swietokrzyskie",
-    "warminsko-mazurskie",
-    "wielkopolskie",
-    "zachodniopomorskie",
-]
 
 
 class Settings:
@@ -261,9 +226,7 @@ class Settings:
         """
         mongo_db_host = settings.get("host")
         if not isinstance(mongo_db_host, str):
-            logging.warning(
-                "Mongo db host is not correct. Mongo db host is set to default"
-            )
+            logging.warning("Mongo db host is not correct")
             return Constans.DEFAULT_MONGO_DB_HOST
         return mongo_db_host
 

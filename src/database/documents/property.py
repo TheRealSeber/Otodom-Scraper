@@ -4,6 +4,7 @@ from common import MarketType
 from common import OfferedBy
 from common import PropertyType
 from mongoengine import BooleanField
+from mongoengine import DateTimeField
 from mongoengine import Document
 from mongoengine import EmbeddedDocument
 from mongoengine import EmbeddedDocumentField
@@ -25,7 +26,7 @@ class Building(EmbeddedDocument):
     build_year = IntField()
 
 
-class Location(EmbeddedDocument):
+class Localization(EmbeddedDocument):
 
     """
     Class representing a property location in the MongoDB database.
@@ -33,9 +34,11 @@ class Location(EmbeddedDocument):
 
     province = StringField(required=True)
     city = StringField(required=True)
-    district = StringField(required=True)
+    district = StringField()
     street = StringField()
     county = StringField()
+    latitude = FloatField()
+    longitude = FloatField()
 
 
 class PropertyDocument(Document):
@@ -46,18 +49,21 @@ class PropertyDocument(Document):
     link = URLField(required=True)
     promoted = BooleanField(required=True, default=False)
     otodom_id = IntField(required=True, unique=True)
+    created_at = DateTimeField(required=True)
     title = StringField(required=True)
     area = FloatField(required=True)
     floor = StringField()
     price = IntField()
     price_per_meter = IntField()
-    rooms = IntField()
+    rooms = StringField()
     heating = StringField()
+    extras = StringField()
+    security_types = StringField()
     rent = IntField()
     property_type = EnumField(PropertyType, required=True)
     market_type = EnumField(MarketType, required=True)
     auction_type = EnumField(AuctionType, required=True)
-    localization = EmbeddedDocumentField(Location, required=True)
+    localization = EmbeddedDocumentField(Localization, required=True)
     construction_status = EnumField(ConstructionStatus)
     building = EmbeddedDocumentField(Building)
     offered_by = EnumField(OfferedBy, required=True)

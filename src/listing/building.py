@@ -13,5 +13,5 @@ class Building:
         self.floors: str | None = properties.get("Building_floors_num", [None])[0]
         self.build_year: int | None = properties.get("Build_year")
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {key: value for key, value in self.__dict__.items() if value is not None}
