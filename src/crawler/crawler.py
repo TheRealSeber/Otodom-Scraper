@@ -177,7 +177,7 @@ class Crawler:
         The crawler starts crawling the website and extracting the data.
         """
         pages = self.count_pages()
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=25) as executor:
             listings = list(
                 executor.map(self.extract_listings_from_page, range(1, pages + 1))
             )
@@ -190,7 +190,7 @@ class Crawler:
             if Constans.DEFAULT_URL + Property.extract_link(listing)
             not in existing_links
         }
-        with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             listings = list(executor.map(self.extract_listing_data, listings))
 
         self.listings = listings

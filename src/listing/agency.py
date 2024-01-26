@@ -36,12 +36,10 @@ class Agency:
         """
         Extracts the details of the estate agency from the properties.
 
-        There may exist a county before the province
-        (last element in the address property)
-        so such possibility is handled by additional regex.
-
-        (TODO:) If still it was unsuccessful, to retrieve the data,
-        additional request should be made to the otodom.pl agency website.
+        There are three possible formats of the address:
+        1. city, postal_code, street, county, province
+        2. city, postal_code, street, province
+        3. - , street, city, postal_code
 
         :param properties: The properties containing the estate agency details
         :return: The details of the estate agency
@@ -53,7 +51,18 @@ class Agency:
             address_regex = r"^(.*?), (\d{2}-\d{3}), (.*), (.*)$"
             address_data = re.findall(address_regex, address)
             if not address_data:
-                return address, None, None, None, None
+                address_regex = r"^(.*), (.*?), (.*), (\d{2}-\d{3})$"
+                address_data = re.findall(address_regex, address)
+                if not address_data:
+                    return address, None, None, None, None
+                address_data = address_data[0]
+                return (
+                    address_data[1],
+                    address_data[3],
+                    address_data[2],
+                    None,
+                    None,
+                )
             address_data = address_data[0]
             return (
                 address_data[0],
