@@ -1,6 +1,5 @@
 import json
 from datetime import datetime
-from enum import Enum
 
 from bs4 import ResultSet
 from common import AUCTION_TYPE_MAP
@@ -11,66 +10,119 @@ from common import MarketType
 from common import OfferedBy
 from common import PROPERTY_TYPE_MAP
 from common import PropertyType
-from listing.building import Building
-from listing.localization import Localization
+from models.building import BuildingDocument
+from models.localization import LocalizationDocument
+from mongoengine import BooleanField
+from mongoengine import DateTimeField
+from mongoengine import Document
+from mongoengine import EmbeddedDocumentField
+from mongoengine import EnumField
+from mongoengine import FloatField
+from mongoengine import IntField
+from mongoengine import NULLIFY
+from mongoengine import ReferenceField
+from mongoengine import StringField
+from mongoengine import URLField
 
 
-class Property:
+class PropertyDocument(Document):
     """
-    A class that represents a property on the otodom.pl website.
+    Class representing a property document in the MongoDB database.
     """
 
-    def __init__(self, code: ResultSet):
-        """
-        Initializes the Prop instance.
+    link = URLField(required=True)
+    promoted = BooleanField(required=True, default=False)
+    otodom_id = IntField(required=True, unique=True)
+    created_at = DateTimeField(required=True)
+    title = StringField(required=True)
+    area = FloatField(required=True)
+    floor = StringField()
+    price = IntField()
+    price_per_meter = IntField()
+    rooms = StringField()
+    heating = StringField()
+    extras = StringField()
+    security_types = StringField()
+    rent = IntField()
+    property_type = EnumField(PropertyType, required=True)
+    market_type = EnumField(MarketType, required=True)
+    auction_type = EnumField(AuctionType, required=True)
+    localization = EmbeddedDocumentField(LocalizationDocument, required=True)
+    construction_status = EnumField(ConstructionStatus)
+    building = EmbeddedDocumentField(BuildingDocument)
+    offered_by = EnumField(OfferedBy, required=True)
+    estate_agency = ReferenceField("AgencyDocument", reverse_delete_rule=NULLIFY)
 
-        Some of the attributes has defined types and during extraction of the data,
-        they a guarantee to exist, but for the sake of the initialization
-        they are set to None for now.
+    meta = {"collection": "Properties"}
 
-        :param code: The HTML code of the listing page
+    def extract_data(self, code: ResultSet) -> None:
         """
-        self.link: str = Constans.DEFAULT_URL + self.extract_link(code)
-        self.promoted: bool = self.extract_promoted(code)
-        self.created_at: datetime = None
-        self.otodom_id: int = None
-        self.title: str = None
-        self.area: int = None
-        self.floor: int | None = None
-        self.price: int | None = None
-        self.price_per_meter: float | None = None
-        self.rooms: int | None = None
-        self.rent: int | None = None
-        self.heating: str | None = None
-        self.extras: str | None = None
-        self.security_types: list[str] | None = None
-        self.offered_by: str | None = None
-        self.property_type: PropertyType = None
-        self.market_type: MarketType = None
-        self.auction_type: AuctionType = None
-        self.localization: Localization = None
-        self.construction_status: ConstructionStatus | None = None
-        self.building: Building | None = None
+        Extracts data from the page and updates the property instance.
 
-    @staticmethod
-    def extract_link(code: ResultSet) -> str:
+        This method loads the property information from a script tag in the HTML code,
+        parses it as JSON and uses it to update the attributes of the property instance.
+
+        :param code: The HTML code containing the property information
         """
-        Extracts the link from the HTML code.
+        listing_information = json.loads(
+            code.find("script", {"type": "application/json"}).text
+        )
+        listing_properties = listing_information["props"]["pageProps"]["ad"]
+        self.otodom_id = listing_properties["id"]
+        self.created_at = self.extract_created_at(listing_properties)
+        self.title = listing_properties["title"]
+        self.area = self.extract_area(listing_properties)
+        self.floor = self.extract_property_floor(listing_properties["target"])
+        self.price = listing_properties["target"].get("Price", None)
+        self.price_per_meter = listing_properties["target"].get("Price_per_m", None)
+        self.rooms = self.extract_rooms(listing_properties["target"])
+        self.rent = listing_properties["target"].get("Rent", None)
+        self.heating = self.extract_heating(listing_properties["target"])
+        self.extras = self.extract_extras(listing_properties["target"])
+        self.security_types = self.extract_security_types(listing_properties["target"])
+        self.property_type = PROPERTY_TYPE_MAP[
+            listing_properties["target"]["ProperType"]
+        ]
+        self.market_type = MarketType(listing_properties["target"]["MarketType"])
+        self.auction_type = AUCTION_TYPE_MAP[listing_properties["target"]["OfferType"]]
+        self.localization = self.extract_localization(listing_properties["location"])
+        self.construction_status = self.extract_construction_status(
+            listing_properties["target"]
+        )
+        self.building = self.extract_building(listing_properties["target"])
+        self.offered_by = self.extract_offered_by(listing_properties)
+
+    def set_link(self, code: ResultSet) -> None:
+        """
+        Set the listing link from the HTML code.
 
         :param code: The HTML code containing the link
-        :return: The extracted link
         """
-        return code.select_one("a")["href"]
+        self.link = Constans.DEFAULT_URL + code.select_one("a")["href"]
 
-    @staticmethod
-    def extract_promoted(code: ResultSet) -> bool:
+    def set_promoted(self, code: ResultSet) -> bool:
         """
         Determines whether the property is promoted on the page.
 
         :param code: The HTML code containing the promotion status
         :return: True if the property is promoted on the page, False otherwise
         """
-        return code.select_one("article>span+div") is not None
+        self.promoted = code.select_one("article>span+div") is not None
+
+    @staticmethod
+    def extract_link(code: ResultSet) -> None:
+        """
+        Set the listing link from the HTML code.
+
+        :param code: The HTML code containing the link
+        """
+        return code.select_one("a")["href"]
+
+    @staticmethod
+    def extract_localization(properties: dict) -> LocalizationDocument:
+        localization = LocalizationDocument()
+        localization.extract_data(properties)
+        return localization
 
     @staticmethod
     def extract_construction_status(properties: dict) -> ConstructionStatus | None:
@@ -85,7 +137,7 @@ class Property:
         return ConstructionStatus(properties["ConstructionStatus"])
 
     @staticmethod
-    def extract_building(properties: dict) -> Building | None:
+    def extract_building(properties: dict) -> BuildingDocument | None:
         """
         Determines the building from the properties.
 
@@ -98,7 +150,9 @@ class Property:
             and properties.get("Build_year") is None
         ):
             return None
-        return Building(properties)
+        building = BuildingDocument()
+        building.extract_data(properties)
+        return building
 
     @staticmethod
     def extract_offered_by(properties: dict) -> str:
@@ -176,6 +230,19 @@ class Property:
         return datetime.strptime(created_at, "%Y-%m-%dT%H:%M:%S%z")
 
     @staticmethod
+    def extract_area(properties: dict) -> float | None:
+        """
+        Extracts the area of the property from the properties
+
+        :param properties: The properties containing the creation date of the property
+        :return: The area of the property
+        """
+        area = properties["target"].get("Area", None)
+        if area is None:
+            return None
+        return float(area)
+
+    @staticmethod
     def extract_rooms(properties: dict) -> str | None:
         """
         Extracts the number of rooms of the property from the properties.
@@ -213,63 +280,3 @@ class Property:
         if security_types is None:
             return None
         return ",".join(security_types)
-
-    def extract_data_from_page(self, code: ResultSet) -> None:
-        """
-        Extracts data from the page and updates the property instance.
-
-        This method loads the property information from a script tag in the HTML code,
-        parses it as JSON and uses it to update the attributes of the property instance.
-
-        :param code: The HTML code containing the property information
-        """
-        listing_information = json.loads(
-            code.find("script", {"type": "application/json"}).text
-        )
-        listing_properties = listing_information["props"]["pageProps"]["ad"]
-        self.otodom_id = listing_properties["id"]
-        self.created_at = self.extract_created_at(listing_properties)
-        self.title = listing_properties["title"]
-        self.area = listing_properties["target"].get("Area", None)
-        self.floor = self.extract_property_floor(listing_properties["target"])
-        self.price = listing_properties["target"].get("Price", None)
-        self.price_per_meter = listing_properties["target"].get("Price_per_m", None)
-        self.rooms = self.extract_rooms(listing_properties["target"])
-        self.rent = listing_properties["target"].get("Rent", None)
-        self.heating = self.extract_heating(listing_properties["target"])
-        self.extras = self.extract_extras(listing_properties["target"])
-        self.security_types = self.extract_security_types(listing_properties["target"])
-        self.property_type = PROPERTY_TYPE_MAP[
-            listing_properties["target"]["ProperType"]
-        ]
-        self.market_type = MarketType(listing_properties["target"]["MarketType"])
-        self.auction_type = AUCTION_TYPE_MAP[listing_properties["target"]["OfferType"]]
-        self.localization = Localization(listing_properties["location"])
-        self.construction_status = self.extract_construction_status(
-            listing_properties["target"]
-        )
-        self.building = self.extract_building(listing_properties["target"])
-        self.offered_by = self.extract_offered_by(listing_properties)
-
-    def to_dict(self) -> dict:
-        """
-        Converts the Property instance to a dictionary.
-
-        Removes all None values from the dictionary.
-
-        :return: The Property representation as a dictionary
-        """
-        self_to_dict = {
-            key: value for key, value in self.__dict__.items() if value is not None
-        }
-        enum_to_str = {
-            key: val.value
-            for key, val in self.__dict__.items()
-            if isinstance(val, Enum)
-        }
-        self_to_dict.update(enum_to_str)
-        if self.localization is not None:
-            self_to_dict["localization"] = self.localization.to_dict()
-        if self.building is not None:
-            self_to_dict["building"] = self.building.to_dict()
-        return self_to_dict

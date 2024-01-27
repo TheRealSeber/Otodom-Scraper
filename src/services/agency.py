@@ -1,7 +1,6 @@
 import logging
 
-from database import AgencyDocument
-from listing import Agency
+from models import AgencyDocument
 from mongoengine.errors import NotUniqueError
 
 
@@ -21,16 +20,17 @@ class AgencyService:
         return AgencyDocument.objects(otodom_id=otodom_id).first()
 
     @classmethod
-    def put(cls, agency: Agency) -> None:
+    def put(cls, agency: AgencyDocument) -> AgencyDocument:
         try:
-            agency_doc = AgencyDocument(**agency.to_dict())
-            agency_doc.save()
+            agency.validate()
+            agency = agency.save()
+            return agency
         except NotUniqueError:
             pass
         except Exception as e:
             logging.warning(
                 f"""Failed to insert agency {agency.name} to database
             Error: {e}
-            Agency data: {agency.to_dict()}
+            Agency data: {agency.to_json()}
             """
             )

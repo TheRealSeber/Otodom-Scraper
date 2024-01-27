@@ -2,19 +2,27 @@ import json
 import re
 
 from bs4 import ResultSet
+from mongoengine import Document
+from mongoengine import IntField
+from mongoengine import StringField
 
 
-class Agency:
+class AgencyDocument(Document):
     """
-    Represents an estate agency.
+    Class representing an agency document in the MongoDB database.
     """
 
-    def __init__(self, code: ResultSet):
-        """
-        Initializes the estate agency instance.
+    name = StringField(required=True)
+    otodom_id = IntField(required=True, unique=True)
+    street = StringField(required=True)
+    city = StringField()
+    province = StringField()
+    postal_code = StringField()
+    county = StringField()
 
-        :param code: The HTML code containing the estate agency details
-        """
+    meta = {"collection": "Agencies"}
+
+    def extract_data(self, code: ResultSet):
         listing_information = json.loads(
             code.find("script", {"type": "application/json"}).text
         )
@@ -79,6 +87,3 @@ class Agency:
             address_data[3],
             address_data[4],
         )
-
-    def to_dict(self):
-        return {key: value for key, value in self.__dict__.items() if value is not None}

@@ -1,11 +1,23 @@
-class Localization:
-    """
-    Represents the localization of a listing.
+from mongoengine import EmbeddedDocument
+from mongoengine import FloatField
+from mongoengine import StringField
 
-    :param properties: The properties dictionary containing the localization
+
+class LocalizationDocument(EmbeddedDocument):
+
+    """
+    Class representing a property location in the MongoDB database.
     """
 
-    def __init__(self, properties: dict):
+    province = StringField(required=True)
+    city = StringField(required=True)
+    district = StringField()
+    street = StringField()
+    county = StringField()
+    latitude = FloatField()
+    longitude = FloatField()
+
+    def extract_data(self, properties: dict):
         self.province = properties["address"]["province"]["code"]
         self.city = properties["address"]["city"]["code"]
         self.district = self.extract_district(properties["address"])
@@ -69,6 +81,3 @@ class Localization:
         latitude = coordinates.get("latitude")
         longitude = coordinates.get("longitude")
         return latitude, longitude
-
-    def to_dict(self):
-        return {key: value for key, value in self.__dict__.items() if value is not None}

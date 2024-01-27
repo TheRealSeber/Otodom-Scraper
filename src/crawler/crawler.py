@@ -5,15 +5,16 @@ import logging
 
 import requests
 from bs4 import BeautifulSoup
+from bs4 import ResultSet
 from common import Constans
 from common import OfferedBy
-from crawler.utils import flatten_json
-from database import AgencyService
-from database import PropertyService
-from listing import Agency
-from listing import DataExtractionError
-from listing import Property
+from crawler.exceptions import DataExtractionError
+from crawler.listing import Listing
+from models import AgencyDocument
+from models import PropertyDocument
 from mongoengine import connect as mongo_connect
+from services import AgencyService
+from services import PropertyService
 from settings import Settings
 
 HEADERS = {
@@ -32,9 +33,9 @@ class Crawler:
         """
         Initialize the crawler.
         """
-        self.settings = Settings()
-        self.params = self.generate_params()
-        self.listings = list()
+        self.settings: Settings = Settings()
+        self.params: dict = self.generate_params()
+        self.listings: list[Listing] = []
         mongo_connect(host=self.settings.mongo_db_host)
 
     def generate_search_url(self) -> str:
@@ -99,10 +100,10 @@ class Crawler:
         )
         logging.info(f"Extracting listings from page {page}")
         soup = BeautifulSoup(response.content, "html.parser")
-        listings = soup.select("li[data-cy=listing-item]")
+        listings = soup.select("div[data-cy=listing-item]")
         return listings
 
-    def extract_listing_data(self, listing: Property) -> Property:
+    def extract_listing_data(self, listing_data: ResultSet) -> Listing | None:
         """
         Extract the data from the given listing.
 
@@ -115,23 +116,44 @@ class Crawler:
         :raises DataExtractionError: If the data extraction fails
         :return: The data from the listing
         """
+        listing = Listing()
+        property_ = PropertyDocument()
+        property_.set_link(listing_data)
+        property_.set_promoted(listing_data)
+        soup = self.try_get_listing_page(url=property_.link)
+        property_.extract_data(soup)
+        if property_.offered_by == OfferedBy.ESTATE_AGENCY:
+            agency = AgencyDocument()
+            agency.extract_data(soup)
+            agency_doc = AgencyService.get_by_otodom_id(agency.otodom_id)
+            if agency_doc is None or agency_doc.otodom_id != agency.otodom_id:
+                agency_doc = AgencyService.put(agency)
+            property_.estate_agency = agency_doc.to_dbref()
+            listing.agency = agency_doc
+        if PropertyService.get_by_otodom_id(property_.otodom_id) is None:
+            property_ = PropertyService.put(property_)
+            listing.property_ = property_
+            return listing
+        return None
+
+    def try_get_listing_page(self, url: str) -> BeautifulSoup:
+        """
+        Tries to get the listing page.
+
+        :param url: The URL of the listing page
+        :raises DataExtractionError: If the data extraction fails
+        :return: The data from the listing
+        """
         max_retries = 3
         while max_retries > 0:
-            response = requests.get(url=listing.link, headers=HEADERS)
-            logging.info(f"Extracting data from {listing.link}")
+            response = requests.get(url=url, headers=HEADERS)
+            logging.info(f"Extracting data from {url}")
             soup = BeautifulSoup(response.content, "html.parser")
-            if not listing.informational_json_exists(soup):
+            if not PropertyDocument.informational_json_exists(soup):
                 max_retries -= 1
                 continue
-            listing.extract_data_from_page(soup)
-            if listing.offered_by == OfferedBy.ESTATE_AGENCY:
-                agency = Agency(soup)
-                agency_doc = AgencyService.get_by_otodom_id(agency.otodom_id)
-                if agency_doc is None or agency_doc.otodom_id != agency.otodom_id:
-                    AgencyService.put(agency)
-            PropertyService.put(listing)
-            return listing
-        raise DataExtractionError(url=listing.link)
+            return soup
+        raise DataExtractionError(url=url)
 
     def get_listings(self) -> list:
         """
@@ -149,9 +171,10 @@ class Crawler:
         """
         with open(filename, "w", encoding="utf-8") as file:
             json.dump(
-                [obj.to_dict() for obj in self.listings],
+                [listing.to_dict() for listing in self.listings],
                 file,
                 ensure_ascii=False,
+                default=str,
                 indent=4,
             )
 
@@ -161,7 +184,7 @@ class Crawler:
 
         :param filename: The name of the file
         """
-        data = [flatten_json(obj.to_dict()) for obj in self.listings]
+        data = [obj.to_dict() for obj in self.listings]
 
         keys = {key for dict_ in data for key in dict_.keys()}
 
@@ -184,13 +207,15 @@ class Crawler:
 
         existing_links = PropertyService.get_all_links()
         listings = {
-            Property(listing)
+            listing_data
             for sublist in listings
-            for listing in sublist
-            if Constans.DEFAULT_URL + Property.extract_link(listing)
+            for listing_data in sublist
+            if Constans.DEFAULT_URL + PropertyDocument.extract_link(listing_data)
             not in existing_links
         }
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-            listings = list(executor.map(self.extract_listing_data, listings))
+            listings: list[Listing] = list(
+                filter(None.__ne__, executor.map(self.extract_listing_data, listings))
+            )
 
         self.listings = listings
