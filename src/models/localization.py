@@ -18,6 +18,12 @@ class LocalizationDocument(EmbeddedDocument):
     longitude = FloatField()
 
     def extract_data(self, properties: dict):
+        """
+        Extracts data about localization from already converted JSON
+        from the page to the dictionary.
+
+        :param properties: The dict containing the localization information
+        """
         self.province = properties["address"]["province"]["code"]
         self.city = properties["address"]["city"]["code"]
         self.district = self.extract_district(properties["address"])

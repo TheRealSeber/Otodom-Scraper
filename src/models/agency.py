@@ -23,6 +23,14 @@ class AgencyDocument(Document):
     meta = {"collection": "Agencies"}
 
     def extract_data(self, code: ResultSet):
+        """
+        Extracts data from the page and updates the property instance.
+
+        This method loads the property information from a script tag in the HTML code,
+        parses it as JSON and uses it to update the attributes of the property instance.
+
+        :param code: The HTML code containing the property information
+        """
         listing_information = json.loads(
             code.find("script", {"type": "application/json"}).text
         )
@@ -47,7 +55,7 @@ class AgencyDocument(Document):
         There are three possible formats of the address:
         1. city, postal_code, street, county, province
         2. city, postal_code, street, province
-        3. - , street, city, postal_code
+        3. _ , street, city, postal_code
 
         :param properties: The properties containing the estate agency details
         :return: The details of the estate agency

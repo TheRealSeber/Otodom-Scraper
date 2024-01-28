@@ -2,13 +2,19 @@ import logging
 
 from models import PropertyDocument
 from mongoengine import QuerySet
-from mongoengine.errors import NotUniqueError
 
 
 class PropertyService:
     """
     Service responsible for interacting with the property documents in the database.
     """
+
+    @classmethod
+    def get_all(cls) -> list[PropertyDocument]:
+        """
+        :return: All the properties in the database
+        """
+        return PropertyDocument.objects.all()
 
     @classmethod
     def get_by_otodom_id(cls, otodom_id: int) -> PropertyDocument | None:
@@ -37,12 +43,10 @@ class PropertyService:
             property_.validate()
             property_ = property_.save()
             return property_
-        except NotUniqueError:
-            pass
         except Exception as e:
             logging.warning(
                 f"""Failed to insert property {property_.link} to database
             Error: {e}
-            Property data: {property_.to_json()}
+            Property data: {property_.to_mongo().to_dict()}
             """
             )

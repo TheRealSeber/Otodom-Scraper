@@ -32,7 +32,12 @@ class Listing:
         flatten(y)
         return out
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
+        """
+        Converts the listing to a python dictionary instance.
+
+        :return: The listing as a python dictionary instance
+        """
         res = dict()
         property_ = self.property_.to_mongo().to_dict()
         res.update(property_)
