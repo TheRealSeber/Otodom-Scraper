@@ -227,7 +227,7 @@ class Settings:
         mongo_db_host = settings.get("host")
         if not isinstance(mongo_db_host, str):
             logging.warning("Mongo db host is not correct")
-            return Constans.DEFAULT_MONGO_DB_HOST
+            exit(1)
         return mongo_db_host
 
     def set_default(self):
