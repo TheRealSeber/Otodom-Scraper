@@ -9,6 +9,8 @@ from settings.utils import get_auction_type
 from settings.utils import get_property_type
 from settings.utils import replace_polish_characters
 
+logger = logging.getLogger(__name__)
+
 
 class Settings:
     """
@@ -46,7 +48,7 @@ class Settings:
 
         If the file cannot be loaded, the settings are set to default values.
         """
-        logging.info("Loading settings")
+        logger.info("Loading settings")
         try:
             with open("settings.json", "r", encoding="utf-8") as f:
                 settings = json.load(f)
@@ -61,11 +63,11 @@ class Settings:
                 self.mongo_db_host = self.__init_mongo_db_host(settings["database"])
 
         except Exception as e:
-            logging.warning(
-                "Settings file not found. Settings are set to default. Error info: %s",
-                e,
+            logger.warning(
+                f"Error loading the settings. Settings are set to default. Error: {e}",
             )
             self.set_default()
+        logger.info("Running config: " + str(self.__dict__))
 
     @staticmethod
     def __init_price(settings: dict) -> (int, int):
@@ -80,25 +82,24 @@ class Settings:
         :return: A tuple containing the minimum and maximum price
         """
         price = settings.get("price")
-        logging.info(price)
         if not isinstance(price, dict):
-            logging.warning("Prices is not of dict type. Price is set to default")
+            logger.warning("Prices is not of dict type. Price is set to default")
             return Constans.DEFAULT_PRICE_MIN, Constans.DEFAULT_PRICE_MAX
 
         price_min = price.get("min")
         price_max = price.get("max")
 
         if not isinstance(price_min, int):
-            logging.warning("Min price is not of int type. Min price is set to default")
+            logger.warning("Min price is not of int type. Min price is set to default")
             price_min = Constans.DEFAULT_PRICE_MIN
         if not isinstance(price_max, int):
-            logging.warning("Max price is not of int type. Max price is set to default")
+            logger.warning("Max price is not of int type. Max price is set to default")
             price_max = Constans.DEFAULT_PRICE_MAX
         if price_min < 0 or price_max < 0:
-            logging.warning("Prices cannot be negative. Prices are set to default")
+            logger.warning("Prices cannot be negative. Prices are set to default")
             return Constans.DEFAULT_PRICE_MIN, Constans.DEFAULT_PRICE_MAX
         if price_min > price_max:
-            logging.warning(
+            logger.warning(
                 "Min price cannot be greater than max price. Prices are set to default"
             )
             return Constans.DEFAULT_PRICE_MIN, Constans.DEFAULT_PRICE_MAX
@@ -118,11 +119,11 @@ class Settings:
         """
         province = settings.get("province")
         if not isinstance(province, str):
-            logging.warning("Province is not correct. Province is set to default")
+            logger.warning("Province is not correct. Province is set to default")
             return Constans.DEFAULT_PROVINCE
         province = replace_polish_characters(province)
         if province not in AVAILABLE_PROVINCES:
-            logging.warning("Province is not correct. Province is set to default")
+            logger.warning("Province is not correct. Province is set to default")
             return Constans.DEFAULT_PROVINCE
         province = province.replace("-", "--")
         return province
@@ -140,7 +141,7 @@ class Settings:
         """
         city = settings.get("city")
         if not isinstance(city, str):
-            logging.warning("City is not correct. City is set to default")
+            logger.warning("City is not correct. City is set to default")
             return Constans.DEFAULT_CITY
         return replace_polish_characters(city)
 
@@ -157,7 +158,7 @@ class Settings:
         """
         district = settings.get("district")
         if not isinstance(district, str) or district == "":
-            logging.warning("District is not correct. District is set to default")
+            logger.warning("District is not correct. District is set to default")
             return Constans.DEFAULT_DISTRICT
         return replace_polish_characters(district)
 
@@ -174,14 +175,14 @@ class Settings:
         """
         property_type_str = settings.get("property_type")
         if not isinstance(property_type_str, str):
-            logging.warning(
+            logger.warning(
                 "Property type is not a string. Property type is set to default"
             )
             return Constans.DEFAULT_PROPERTY_TYPE
 
         property_type = get_property_type(property_type_str)
         if property_type is None:
-            logging.warning(
+            logger.warning(
                 "Property type is not correct. Property type is set to default"
             )
             return Constans.DEFAULT_PROPERTY_TYPE
@@ -201,14 +202,14 @@ class Settings:
         """
         auction_type_str = settings.get("auction_type")
         if not isinstance(auction_type_str, str):
-            logging.warning(
+            logger.warning(
                 "Auction type is not correct. Auction type is set to default"
             )
             return Constans.DEFAULT_AUCTION_TYPE
 
         auction_type = get_auction_type(auction_type_str)
         if auction_type is None:
-            logging.warning(
+            logger.warning(
                 "Auction type is not correct. Auction type is set to default"
             )
             return Constans.DEFAULT_AUCTION_TYPE
@@ -226,7 +227,7 @@ class Settings:
         """
         mongo_db_host = settings.get("host")
         if not isinstance(mongo_db_host, str):
-            logging.warning("Mongo db host is not correct")
+            logger.warning("Mongo db host is not correct")
             exit(1)
         return mongo_db_host
 

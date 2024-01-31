@@ -8,6 +8,8 @@ from models import PropertyDocument
 from mongoengine import QuerySet
 from services import AgencyService
 
+logger = logging.getLogger(__name__)
+
 
 class PropertyService:
     """
@@ -19,6 +21,7 @@ class PropertyService:
         """
         :return: All the properties in the database
         """
+        logger.info("Getting all properties from database")
         return PropertyDocument.objects.all()
 
     @classmethod
@@ -36,6 +39,7 @@ class PropertyService:
         """
         :return: All the links of the properties in the database
         """
+        logger.info("Getting all property links from database")
         properties: QuerySet = PropertyDocument.objects.all()
         return {property_.link for property_ in properties}
 
@@ -49,7 +53,7 @@ class PropertyService:
             property_ = property_.save()
             return property_
         except Exception as e:
-            logging.warning(
+            logging.exception(
                 f"""Failed to insert property {property_.link} to database
             Error: {e}
             Property data: {property_.to_mongo().to_dict()}
@@ -63,10 +67,12 @@ class PropertyService:
 
         :param filename: The name of the file
         """
+        logger.info(f"Saving properties to {filename}. Format: csv")
         properties = cls.get_all()
         properties = [property_.to_mongo().to_dict() for property_ in properties]
 
         if include_agencies:
+            logger.info("Including agencies in the csv file")
             agencies = AgencyService.get_all()
             agencies = [agency.to_mongo().to_dict() for agency in agencies]
             for property_ in properties:
@@ -76,6 +82,7 @@ class PropertyService:
                     for agency in agencies:
                         if str(agency["_id"]) == agency_id:
                             property_["agency"] = agency
+                            property_.pop("estate_agency")
                             break
 
         with open(filename, "w", newline="", encoding="utf-8") as output_file:
@@ -90,10 +97,12 @@ class PropertyService:
 
         :param filename: The name of the file
         """
+        logger.info(f"Saving properties to {filename}. Format: json")
         properties = cls.get_all()
         properties = [listing.to_mongo().to_dict() for listing in properties]
 
         if include_agencies:
+            logger.info("Including agencies in the json file")
             agencies = AgencyService.get_all()
             agencies = [agency.to_mongo().to_dict() for agency in agencies]
             for property_ in properties:
@@ -103,6 +112,7 @@ class PropertyService:
                     for agency in agencies:
                         if str(agency["_id"]) == agency_id:
                             property_["agency"] = agency
+                            property_.pop("estate_agency")
                             break
 
         with open(filename, "w", encoding="utf-8") as file:

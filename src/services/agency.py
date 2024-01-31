@@ -2,6 +2,8 @@ import logging
 
 from models import AgencyDocument
 
+logger = logging.getLogger(__name__)
+
 
 class AgencyService:
     """
@@ -13,6 +15,7 @@ class AgencyService:
         """
         :return: All the agencies in the database
         """
+        logger.info("Getting all agencies from database")
         return AgencyDocument.objects.all()
 
     @classmethod
@@ -32,7 +35,7 @@ class AgencyService:
             agency = agency.save()
             return agency
         except Exception as e:
-            logging.warning(
+            logging.exception(
                 f"""Failed to insert agency {agency.name} to database
             Error: {e}
             Agency data: {agency.to_mongo().to_dict()}

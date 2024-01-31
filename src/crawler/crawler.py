@@ -17,6 +17,8 @@ from services import connect_to_database
 from services import PropertyService
 from settings import Settings
 
+logger = logging.getLogger(__name__)
+
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"  # noqa: E501
 }
@@ -78,6 +80,7 @@ class Crawler:
         """
         max_retries = 3
         while max_retries > 0:
+            logger.info("Counting pages to crawl, try: " + str(4 - max_retries) + "/3")
             response = requests.get(
                 url=self.generate_search_url(), params=self.params, headers=HEADERS
             )
@@ -87,8 +90,9 @@ class Crawler:
                 max_retries -= 1
                 continue
             pages = pages_element[-1].text
+            logger.info(f"Found {pages} pages to crawl")
             return int(pages)
-        logging.warning("No listings found with given parameters. Exiting...")
+        logger.warning("No listings found with given parameters. Exiting...")
         exit(1)
 
     def extract_listings_from_page(self, page: int) -> set:
@@ -103,7 +107,7 @@ class Crawler:
         response = requests.get(
             url=self.generate_search_url(), params=params, headers=HEADERS, timeout=10
         )
-        logging.info(f"Extracting listings from page {page}")
+        logger.info(f"Extracting listings from page {page}")
         soup = BeautifulSoup(response.content, "html.parser")
         listings = soup.select("div[data-cy=listing-item]")
         return listings
@@ -129,7 +133,10 @@ class Crawler:
         try:
             soup = self.try_get_listing_page(url=property_.link)
         except DataExtractionError as e:
-            logging.warning(f"{e}")
+            logger.exception(
+                f"Failed to extract data from {property_.link}, Error: {e}"
+            )
+            return
         property_.extract_data(soup)
         if property_.offered_by == OfferedBy.ESTATE_AGENCY:
             agency = AgencyDocument()
@@ -140,6 +147,7 @@ class Crawler:
             property_.estate_agency = agency_doc.to_dbref()
             listing.agency = agency_doc
         if PropertyService.get_by_otodom_id(property_.otodom_id) is None:
+            logger.info(f"Adding new property {property_.link} to database")
             property_ = PropertyService.put(property_)
             listing.property_ = property_
             self.listings.append(listing)
@@ -157,7 +165,6 @@ class Crawler:
         max_retries = 3
         while max_retries > 0:
             response = requests.get(url=url, headers=HEADERS)
-            logging.info(f"Extracting data from {url}")
             soup = BeautifulSoup(response.content, "html.parser")
             if not PropertyDocument.informational_json_exists(soup):
                 max_retries -= 1
@@ -171,6 +178,7 @@ class Crawler:
 
         :param filename: The name of the file
         """
+        logger.info(f"Saving listings to {filename}. Format: csv")
         data = [listing.to_dict() for listing in self.listings]
 
         with open(filename, "w", newline="", encoding="utf-8") as file:
@@ -184,6 +192,7 @@ class Crawler:
 
         :param filename: The name of the file
         """
+        logger.info(f"Saving listings to {filename}. Format: json")
         with open(filename, "w", encoding="utf-8") as file:
             json.dump(
                 [listing.to_dict() for listing in self.listings],

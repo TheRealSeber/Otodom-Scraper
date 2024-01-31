@@ -1,6 +1,9 @@
 import json
+import logging
 
 from mongoengine import connect as mongo_connect
+
+logger = logging.getLogger(__name__)
 
 
 def connect_to_database(host: str = None) -> None:
@@ -12,6 +15,7 @@ def connect_to_database(host: str = None) -> None:
 
     :param host: The host of the database
     """
+    logger.info("Connecting to the database")
     if host is None:
         with open("settings.json", "r", encoding="utf-8") as f:
             settings = json.load(f)
