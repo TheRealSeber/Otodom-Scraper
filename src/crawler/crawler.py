@@ -1,4 +1,6 @@
 import concurrent.futures
+import csv
+import json
 import logging
 
 import requests
@@ -8,12 +10,10 @@ from common import Constans
 from common import OfferedBy
 from crawler.exceptions import DataExtractionError
 from crawler.listing import Listing
-from crawler.utils import to_csv_file
-from crawler.utils import to_json_file
 from models import AgencyDocument
 from models import PropertyDocument
-from mongoengine import connect as mongo_connect
 from services import AgencyService
+from services import connect_to_database
 from services import PropertyService
 from settings import Settings
 
@@ -37,7 +37,7 @@ class Crawler:
         self.settings: Settings = Settings()
         self.params: dict = self.generate_params()
         self.listings: list[Listing] = []
-        mongo_connect(host=self.settings.mongo_db_host)
+        connect_to_database(host=self.settings.mongo_db_host)
 
     def generate_search_url(self) -> str:
         """
@@ -165,25 +165,33 @@ class Crawler:
             return soup
         raise DataExtractionError(url=url)
 
-    def to_json_file(self, filename: str) -> None:
-        """
-        Save the listings to a json file.
-
-        Abstraction method over the utils.to_json_file function.
-
-        :param filename: The name of the file
-        """
-        to_json_file(filename, self.listings)
-
     def to_csv_file(self, filename: str) -> None:
         """
-        Save the listings to a csv file.
-
-        Abstraction method over the utils.to_csv_file function.
+        Saves the listings to a json file.
 
         :param filename: The name of the file
         """
-        to_csv_file(filename, self.listings)
+        data = [listing.to_dict() for listing in self.listings]
+
+        with open(filename, "w", newline="", encoding="utf-8") as file:
+            dict_writer = csv.DictWriter(file, Constans.CSV_KEYS)
+            dict_writer.writeheader()
+            dict_writer.writerows(data)
+
+    def to_json_file(self, filename: str) -> None:
+        """
+        Saves the listings to a csv file.
+
+        :param filename: The name of the file
+        """
+        with open(filename, "w", encoding="utf-8") as file:
+            json.dump(
+                [listing.to_dict() for listing in self.listings],
+                file,
+                ensure_ascii=False,
+                default=str,
+                indent=4,
+            )
 
     def start(self) -> None:
         """

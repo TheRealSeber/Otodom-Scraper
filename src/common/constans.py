@@ -59,6 +59,47 @@ class Constans:
     DEFAULT_PROPERTY_TYPE = PropertyType.FLAT
     DEFAULT_AUCTION_TYPE = AuctionType.SALE
 
+    CSV_KEYS = [
+        "_id",
+        "agency__id",
+        "agency_city",
+        "agency_county",
+        "agency_name",
+        "agency_otodom_id",
+        "agency_postal_code",
+        "agency_province",
+        "agency_street",
+        "area",
+        "auction_type",
+        "building_build_year",
+        "building_floors",
+        "building_type",
+        "created_at",
+        "estate_agency",
+        "extras",
+        "floor",
+        "heating",
+        "link",
+        "localization_city",
+        "localization_county",
+        "localization_district",
+        "localization_latitude",
+        "localization_longitude",
+        "localization_province",
+        "localization_street",
+        "market_type",
+        "offered_by",
+        "otodom_id",
+        "price",
+        "price_per_meter",
+        "promoted",
+        "property_type",
+        "rent",
+        "rooms",
+        "security_types",
+        "title",
+    ]
+
 
 AUCTION_TYPE_MAP = {
     "sprzedaz": AuctionType.SALE,
